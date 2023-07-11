@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- Page Header Start -->
+<div class="page-header mb-0">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2>{{dish.name}}</h2>
+            </div>
+            <div class="col-12">
+                <a href="/dishes/?q={{dish.category.id}}">{{dish.category.name}}</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Page Header End -->
+
+<!-- Food Start -->
+<div class="food mt-0">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 mx-auto">
+                <div class="food-item">
+                   
+                    <a href="/media/{{dish.image}}" target="_blank"><img src="/media/{{dish.image}}" style="height: 300px;width: 100%;"></a>
+                    <h2 class="my-3">{{dish.name}}</h2>
+                
+                    <p>
+                        {{dish.details}}
+                    </p>
+                    <h4 class="menu-text" style="font-weight: normal;">
+                        {% if dish.price != dish.discounted_price %}
+                            <strong><del>&#8377;{{dish.price}}</del></strong>
+                        {% endif %}
+                            <strong>&#8377;{{dish.discounted_price}}</strong>
+                    </h4>
+                    <p>
+                        <script>
+                            var ing = '{{dish.ingredients}}'.split(',');
+                            for(ingredient in ing){
+                                document.write("<span class='btn btn-sm mr-1 mb-1 btn-outline-success'>"+ing[ingredient]+"</span>");
+                            }
+                        </script>
+                    </p>
+                    {% if dish.is_available %}
+                    
+                     {% if user.is_superuser or user.is_staff %}
+                     {% elif user.is_active %}
+                     {% block payment-gateway %}
+                     <button class="btn custom-btn" id="rzp-button1">Pay Now</button>
+                     
+                      <script>
+                       var razorpayKey = "{{ razor_key }}";
+
+                       var options = {
+                         "key": razorpayKey,
+                         "currency": "INR",
+                         "name": "Flavor Fusion",
+                         "amount": "{{razoramount}}",
+                         "description": "{{dish.description}}",
+                         "image": "{{dish.image}}",
+                         "order_id": "{{order_id}}",
+    
+                         "handler": function (response){
+                           console.log("success")
+                            //alert(response.razorpay_payment_id);
+                            //alert(response.razorpay_order_id);
+                            //alert(response.razorpay_signature)
+                        },
+                         "theme": {
+                            "color": "#3399cc"
+                         }
+                      };
+                       var rzp1 = new Razorpay(options);
+                       rzp1.on('payment.failed', function (response){
+                            alert(response.error.description);
+                       });
+                       document.getElementById('rzp-button1').onclick = function(e){
+                        rzp1.open();
+                        e.preventDefault();
+                       }
+                       </script>
+                    {% endblock payment-gateway %}
+                    {% else %}
+                        <p><a href="{% url 'login' %}">Login to Buy</a> </p>
+                    {% endif %}
+                    {% else %}
+                        <p class="text-danger">Not Available for delivery!</p>
+                    {% endif %}
+                    <a href="/dishes?q={{dish.category.id}}"> More Dishes under {{dish.category.name}}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Food End -->
+{% endblock %}
